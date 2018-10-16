@@ -9,7 +9,7 @@ import org.academiadecodigo.bootcamp.obstacles.Obstacles;
 import org.academiadecodigo.bootcamp.obstacles.Wall;
 import org.academiadecodigo.bootcamp.player.Player;
 
-public class Level {
+public class Level2 {
 
     private Grid grid;
     private Obstacles[] obstacles; //level
@@ -17,23 +17,28 @@ public class Level {
     private int numberOfLasers = 8; //level
     private CollisionDetector collisionDetector; //level
     private int numberOfWalls = 3; //level
-    private int difficultyLevel = 2; //level
     private int speed;
     private Player player;
+    private boolean isOver;
 
 
-    public Level(Grid grid, Player player) {
+
+    public Level2(Grid grid, Player player) {
         this.speed = 1;
         this.grid = grid;
         this.player = player;
+        this.isOver = false;
     }
 
-    public void start() {
+    public void start() throws InterruptedException {
 
-        grid.makeGridPosition(grid.getCols() -1, (grid.getRows()/ 2)).setColor(GridColor.GREEN, true); // Change the color of the door //level
-        grid.makeGridPosition(grid.getCols() -1, (grid.getRows()/ 2)).setColor(GridColor.GREEN, true); //level
+
+        grid.makeGridPosition(grid.getCols() - 1, (grid.getRows() / 2)).setColor(GridColor.GREEN, true); // Change the color of the door //level
+        grid.makeGridPosition(grid.getCols() - 1, (grid.getRows() / 2) - 1).setColor(GridColor.GREEN, true);
 
         obstacles = new LaserCut[numberOfLasers]; //level
+
+        collisionDetector = new CollisionDetector(obstacles, player);
 
         //walls = new Wall[numberOfWalls * grid.getRows()];
         walls = new Wall[numberOfWalls * grid.getRows() + 50]; //level
@@ -44,7 +49,7 @@ public class Level {
 
         int c = 0;
 
-        while (c < numberOfWalls ) { // creates multiple walls
+        while (c < numberOfWalls) { // creates multiple walls
 
             col = col + (grid.getCols() / numberOfWalls);
 
@@ -68,47 +73,69 @@ public class Level {
         }
 
         //set the laser initial position
-        for(int i = 0; i < numberOfLasers; i++) {
+        for (int i = 0; i < numberOfLasers; i++) {
 
             col = ((grid.getCols() / numberOfLasers) * (i + 1) - 2);
 
-            if (i %2 == 0) {
+            if (i % 2 == 0) {
                 obstacles[i] = new LaserCut(col, 0, grid, speed);
                 obstacles[i].setGrid(grid);
 
-            }else {
-                obstacles[i] = new LaserCut(col, grid.getRows()-1, grid, speed);
+            } else {
+                obstacles[i] = new LaserCut(col, grid.getRows() - 1, grid, speed);
                 obstacles[i].setGrid(grid);
             }
 
 
         }
 
-        collisionDetector = new CollisionDetector(obstacles, player);
+        System.out.println(player.getGridPosition());
 
+
+        moveAll();
 
     }
 
-    public boolean collisionCheck() {
 
-        if (collisionDetector.check()) { // make game stops when hit
 
-            //TODO add closeGameScreen
-            return true;
-        }
-        return false;
-    }
+
 
     public void moveAll() throws InterruptedException{
 
-        while(true) {
+        while(!isOver) {
+            //System.out.println(player.getGridPosition());
 
-            Thread.sleep(10);
+            Thread.sleep(100);
+
+            player.move();
 
             for (int i = 0; i < obstacles.length; i++) {
 
                 obstacles[i].move();
             }
+
+            if(collisionDetector.check()) {
+                isOver = true;
+                break;
+            }
+
+            // Set the position of the door and make the game stop
+            if (canWin()) {
+                isOver = true;
+                //TODO add closeGameScreen
+                break;
+            }
         }
+    }
+
+    public boolean canWin() {
+        if (player.getGridPosition().getCol() == grid.getCols() -1 && player.getGridPosition().getRow() == (grid.getRows() / 2)-1 || player.getGridPosition().getCol() == grid.getCols() -1 && player.getGridPosition().getRow() == (grid.getRows() / 2)) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isOver() {
+        return isOver;
     }
 }
